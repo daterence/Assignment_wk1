@@ -15,7 +15,7 @@ import java.util.StringTokenizer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class HttpClientConnection{
+public class HttpClientConnection {
     private ServerSocket ss;
     private Socket socket;
     private String file;
@@ -26,15 +26,16 @@ public class HttpClientConnection{
     private String method;
     private String request;
 
-    public String getMethod(){
+    public String getMethod() {
         return this.method;
     }
-    public String getRequest(){
+
+    public String getRequest() {
         return this.request;
     }
 
-    public HttpClientConnection(Socket socket) throws IOException{
-    
+    public HttpClientConnection(Socket socket) throws IOException {
+
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream());
         msgOut = new BufferedOutputStream(socket.getOutputStream());
@@ -45,7 +46,7 @@ public class HttpClientConnection{
         request = parse.nextToken().toLowerCase();
     }
 
-    public void displayError(String title, String error){
+    public void displayError(String title, String error) {
         out.println(title);
         out.println();
         out.println(error);
@@ -53,7 +54,7 @@ public class HttpClientConnection{
         out.flush();
     }
 
-    public void display(String title, String content, int fileLength, byte[] fileData) throws IOException{
+    public void display(String title, String content, int fileLength, byte[] fileData) throws IOException {
         out.println(title);
         out.println("Server: HTTP Server");
         out.println("Content-type: " + content);
@@ -65,16 +66,16 @@ public class HttpClientConnection{
         msgOut.flush();
     }
 
-    public void close(){
+    public void close() {
         try {
             in.close();
             out.close();
-            msgOut.close();;
+            msgOut.close();
+            ;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
+
     }
-    
 
 }

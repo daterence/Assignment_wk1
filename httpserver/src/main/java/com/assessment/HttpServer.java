@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Scanner;
 
-public class HttpServer implements Runnable{
+public class HttpServer implements Runnable {
     private ServerSocket ss;
     private String command;
     private Socket socket;
@@ -20,10 +20,9 @@ public class HttpServer implements Runnable{
     private String dir = "static";
     private HttpClientConnection clientConnection;
 
-    public HttpServer(){
-        
-    }
+    public HttpServer() {
 
+    }
 
     // if user did not enter
     public int getHttp() {
@@ -31,7 +30,7 @@ public class HttpServer implements Runnable{
         System.out.println("./" + dir);
         return this.portNumber;
     }
-    
+
     // if user enter only one command
     // eg. --docRoot
     public int getHttp(String command) {
@@ -73,28 +72,28 @@ public class HttpServer implements Runnable{
             System.out.println("Passed all 3 conditions");
             File Dir = Paths.get(dir).toFile();
             int i = 1;
-            for(File f: Dir.listFiles()){
+            for (File f : Dir.listFiles()) {
                 String[] fileNames = f.getName().split("\\.");
-                System.out.println(i + ". "+ fileNames[0]);
+                System.out.println(i + ". " + fileNames[0]);
                 i++;
             }
             System.out.println("Select file");
             Scanner scan1 = new Scanner(System.in);
             selectedFile = dir + "/" + scan1.nextLine() + ".html";
-            
+
         }
         return selectedFile;
     }
 
-    private byte[] readContent(File file, int length) throws IOException{
+    private byte[] readContent(File file, int length) throws IOException {
         FileInputStream fileIn = null;
         byte[] content = new byte[length];
 
-        try{
+        try {
             fileIn = new FileInputStream(file);
             fileIn.read(content);
-        } finally{
-            if(fileIn != null){
+        } finally {
+            if (fileIn != null) {
                 fileIn.close();
             }
             return content;
@@ -102,7 +101,7 @@ public class HttpServer implements Runnable{
     }
 
     @Override
-    public void run(){
+    public void run() {
         String request = "";
         ServerSocket ss;
         try {
@@ -111,20 +110,20 @@ public class HttpServer implements Runnable{
         } catch (IOException e1) {
             e1.printStackTrace();
         }
-        try{
+        try {
             clientConnection = new HttpClientConnection(socket);
             String method = clientConnection.getMethod();
-            if(method.equals("GET")){
+            if (method.equals("GET")) {
                 request = clientConnection.getRequest();
 
-                if(request.endsWith("/")){
+                if (request.endsWith("/")) {
                     request += defaultFile;
                 }
 
                 File f = new File(".", request);
                 int fLength = (int) f.length();
                 String content;
-                if(request.endsWith(".htm") || request.endsWith("html")){
+                if (request.endsWith(".htm") || request.endsWith("html")) {
                     content = "text/html";
                 } else {
                     content = "text/plain";
@@ -145,26 +144,26 @@ public class HttpServer implements Runnable{
                 }
                 return;
             }
-        } catch (FileNotFoundException fnfe){
-                String title = "HTTP/1.1 404 Not Found";
-                String error = request + " not found";
-                clientConnection.displayError(title, error);
-                System.out.println("File " + request + " not found");
-                clientConnection.close();
-                try{
-                    socket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return;
-            
-        } catch (IOException ioe){
+        } catch (FileNotFoundException fnfe) {
+            String title = "HTTP/1.1 404 Not Found";
+            String error = request + " not found";
+            clientConnection.displayError(title, error);
+            System.out.println("File " + request + " not found");
+            clientConnection.close();
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return;
+
+        } catch (IOException ioe) {
             System.err.println("Server erro: " + ioe);
-        }finally {
+        } finally {
             try {
                 clientConnection.close();
                 socket.close();
-            } catch (Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             System.out.println("Connection closed.");
