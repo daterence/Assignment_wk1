@@ -35,5 +35,10 @@ public class Main {
         }else {
             httpServer.getHttp();
         }
+        
+        Scanner scan = new Scanner(System.in);
+        String inputDir = scan.nextLine();
+        
+        httpServer.goDir(inputDir);
     }
 }
