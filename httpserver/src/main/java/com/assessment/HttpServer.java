@@ -1,23 +1,35 @@
 package com.assessment;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Scanner;
 
-public class HttpServer {
+public class HttpServer implements Runnable{
+    private ServerSocket ss;
     private String command;
+    private Socket socket;
     private int portNumber;
+    static final String defaultFile = "index.html";
     private String dir = "static";
-    HttpClientConnection clientConnection = new HttpClientConnection();
+    private HttpClientConnection clientConnection;
+
+    public HttpServer(){
+        
+    }
+
 
     // if user did not enter
     public int getHttp() {
         this.portNumber = 3000;
         System.out.println("./" + dir);
         return this.portNumber;
-        // System.out.println(this.portNumber);
     }
     
     // if user enter only one command
@@ -29,8 +41,6 @@ public class HttpServer {
         }
         return this.portNumber;
         // user entered --docRoot
-        // System.out.println(this.portNumber);
-        // System.out.println(this.command);
     }
 
     public int getHttp(String command, String command2) {
@@ -38,8 +48,6 @@ public class HttpServer {
         this.portNumber = Integer.parseInt(command2);
         System.out.println("./" + dir);
         return this.portNumber;
-        // System.out.println(this.command);
-        // System.out.println(this.portNumber);
     }
 
     public int getHttp(String command, String command2, String command3) {
@@ -50,18 +58,12 @@ public class HttpServer {
             System.out.println("./static:/opt/tmp/www");
         }
         return this.portNumber;
-        // System.out.println(this.command);
-        // System.out.println(this.portNumber);
-        // System.out.println(this.docRoot);
     }
 
     // user select directory from docRoot
     public String goDir(String dir) {
         Path path = Paths.get(dir);
         String selectedFile = "";
-        System.out.println("Path exist? " + Files.exists(path));
-        System.out.println("Is path a directory? " + Files.isDirectory(path));
-        System.out.println("Is path readable? " + Files.isReadable(path));
 
         if (!Files.exists(path) && !Files.isDirectory(path) && !Files.isReadable(path)) {
             System.out.println("Fail condition(s)");
@@ -78,42 +80,94 @@ public class HttpServer {
             }
             System.out.println("Select file");
             Scanner scan1 = new Scanner(System.in);
-            selectedFile = scan1.nextLine() + ".html";
+            selectedFile = dir + "/" + scan1.nextLine() + ".html";
             
         }
         return selectedFile;
     }
-    
-    // constructor
-    // public HttpServer() {
-    //     this.command = command;
-    //     this.portNumber = portNumber;
-    //     this.dir = dir;
-    // }
 
-    // // getters and setters
-    // public String getCommand() {
-    //     return this.command;
-    // }
+    private byte[] readContent(File file, int length) throws IOException{
+        FileInputStream fileIn = null;
+        byte[] content = new byte[length];
 
-    // public void setCommand(String command) {
-    //     this.command = command;
-    // }
+        try{
+            fileIn = new FileInputStream(file);
+            fileIn.read(content);
+        } finally{
+            if(fileIn != null){
+                fileIn.close();
+            }
+            return content;
+        }
+    }
 
-    // public int getPortNumber() {
-    //     return this.portNumber;
-    // }
+    @Override
+    public void run(){
+        String request = "";
+        ServerSocket ss;
+        try {
+            ss = new ServerSocket(portNumber);
+            socket = ss.accept();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        try{
+            clientConnection = new HttpClientConnection(socket);
+            String method = clientConnection.getMethod();
+            if(method.equals("GET")){
+                request = clientConnection.getRequest();
 
-    // public void setPortNumber(int portNumber) {
-    //     this.portNumber = portNumber;
-    // }
+                if(request.endsWith("/")){
+                    request += defaultFile;
+                }
 
-    // public String getdir() {
-    //     return this.dir;
-    // }
-
-    // public void setdir(String dir) {
-    //     this.dir = dir;
-    // }
-
+                File f = new File(".", request);
+                int fLength = (int) f.length();
+                String content;
+                if(request.endsWith(".htm") || request.endsWith("html")){
+                    content = "text/html";
+                } else {
+                    content = "text/plain";
+                }
+                byte[] data = readContent(f, fLength);
+                clientConnection.display("HTTP/1.1 200 OK", content, fLength, data);
+                System.out.println("File " + request + ". Type: " + content);
+            } else {
+                String title = "HTTP/1.1 404 Not Found";
+                String error = request + " not found";
+                clientConnection.displayError(title, error);
+                System.out.println(method + " not supported");
+                clientConnection.close();
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return;
+            }
+        } catch (FileNotFoundException fnfe){
+                String title = "HTTP/1.1 404 Not Found";
+                String error = request + " not found";
+                clientConnection.displayError(title, error);
+                System.out.println("File " + request + " not found");
+                clientConnection.close();
+                try{
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return;
+            
+        } catch (IOException ioe){
+            System.err.println("Server erro: " + ioe);
+        }finally {
+            try {
+                clientConnection.close();
+                socket.close();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+            System.out.println("Connection closed.");
+        }
+    }
 }

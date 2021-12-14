@@ -7,9 +7,11 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         HttpServer httpServer = new HttpServer();
 
         String command, command1, command2, file = "";
@@ -35,18 +37,25 @@ public class Main {
         }else {
             port = httpServer.getHttp();
         }
-        System.out.println(port);
+        System.out.println("Selected port: " + port);
         Scanner scan = new Scanner(System.in);
         String inputDir = scan.nextLine();
         
         file = httpServer.goDir(inputDir);
+        System.out.println(file);
+        ExecutorService poolThread = Executors.newFixedThreadPool(3);
+        
+        System.out.println("Server waiting for connection @ port: " + port);
 
-        HttpClientConnection clientConnection = new HttpClientConnection();
-        try {
-            clientConnection.connectBrowser(port, file);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        try(ServerSocket ss = new ServerSocket(port)){
+            while(true){
+                Socket socket = ss.accept();
+                System.out.println("Client Connected");
+                HttpServer server = new HttpServer();
+                poolThread.execute(server);
+            }
         }
+        
+        
     }
 }
