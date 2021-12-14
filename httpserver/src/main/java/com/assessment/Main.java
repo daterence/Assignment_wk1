@@ -12,33 +12,41 @@ public class Main {
     public static void main(String[] args) {
         HttpServer httpServer = new HttpServer();
 
-        String command, command1, command2 = "";
+        String command, command1, command2, file = "";
         int port = 3000;
         
         if(args != null && args.length >= 1){
             if(args.length == 1){
                 //--docRoot
                 command = args[0];
-                httpServer.getHttp(command);
+                port = httpServer.getHttp(command);
             } else if (args.length == 2){
                 //--port 8080
                 command = args[0];
                 command1 = args[1];
-                httpServer.getHttp(command, command1);
+                port = httpServer.getHttp(command, command1);
             } else if (args.length == 3){
                 command = args[0];
                 command1 = args[1];
                 command2 = args[2];
-                httpServer.getHttp(command, command1, command2);
+                port = httpServer.getHttp(command, command1, command2);
             }
             
         }else {
-            httpServer.getHttp();
+            port = httpServer.getHttp();
         }
-        
+        System.out.println(port);
         Scanner scan = new Scanner(System.in);
         String inputDir = scan.nextLine();
         
-        httpServer.goDir(inputDir);
+        file = httpServer.goDir(inputDir);
+
+        HttpClientConnection clientConnection = new HttpClientConnection();
+        try {
+            clientConnection.connectBrowser(port, file);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 }
